@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Beyond the Books Production</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+
+/* Layout: a broadcast run-sheet. Episode rail on the left, the selected episode's poll, workflow and comments on the right. */
+:root{
+  --bg:#eef0f4; --panel:#ffffff; --ink:#151a2b; --muted:#5b6278; --line:#d5d9e3;
+  --accent:#d63a24; --accent-ink:#ffffff; --blue:#1f3fbf; --soft:#e3e7f1;
+  --yes:#1d7a4a; --yes-bg:#dcf1e5; --maybe:#9a6a00; --maybe-bg:#fbefcf; --no:#a3322a; --no-bg:#f8dcd9;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1220; --panel:#181c2e; --ink:#e9ecf5; --muted:#9aa1b8; --line:#2c3250;
+  --accent:#ff5a40; --accent-ink:#140806; --blue:#8aa2ff; --soft:#22283f;
+  --yes:#6fd39c; --yes-bg:#16352a; --maybe:#f1c55a; --maybe-bg:#3a2f12; --no:#ff8a7e; --no-bg:#3d1c1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1220; --panel:#181c2e; --ink:#e9ecf5; --muted:#9aa1b8; --line:#2c3250;
+  --accent:#ff5a40; --accent-ink:#140806; --blue:#8aa2ff; --soft:#22283f;
+  --yes:#6fd39c; --yes-bg:#16352a; --maybe:#f1c55a; --maybe-bg:#3a2f12; --no:#ff8a7e; --no-bg:#3d1c1a; color-scheme:dark}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.5}
+*{box-sizing:border-box}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:4px solid var(--ink);padding-bottom:12px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.onair{font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.14em;background:var(--accent);color:var(--accent-ink);padding:4px 8px;border-radius:3px;text-transform:uppercase}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(34px,6vw,56px);line-height:.9;margin:0;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px;margin:4px 0 0}
+button,.btn{font:inherit;font-weight:600;font-size:14px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:7px 14px;border-radius:4px;cursor:pointer}
+button:hover{background:var(--soft)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover{filter:brightness(1.07)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:4px 8px}
+button.ghost:hover{color:var(--ink);background:var(--soft)}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:4px;padding:7px 10px;width:100%}
+textarea{resize:vertical;min-height:70px}
+label.f{display:grid;gap:4px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.rail{display:grid;gap:10px}
+.rail h2,.sec h2{font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.03em;margin:0}
+.ep{display:grid;gap:6px;text-align:left;width:100%;border:1.5px solid var(--line);background:var(--panel);border-radius:4px;padding:12px;cursor:pointer;font-weight:400}
+.ep:hover{background:var(--panel);border-color:var(--muted)}
+.ep.sel{border-color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+.ep .who{font-weight:700;font-size:16px}
+.ep .what{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--ink)}
+.pill.Booking{background:var(--maybe-bg);color:var(--maybe)}
+.pill.Prep{background:var(--soft);color:var(--blue)}
+.pill.Record{background:var(--accent);color:var(--accent-ink)}
+.pill.Post{background:var(--soft);color:var(--ink)}
+.pill.Live{background:var(--yes-bg);color:var(--yes)}
+.bar{height:5px;background:var(--soft);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:13px}
+.main{display:grid;gap:18px;min-width:0}
+.sec{background:var(--panel);border:1.5px solid var(--line);border-radius:4px;padding:18px;display:grid;gap:14px;min-width:0}
+.sec-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.hero{border:none;background:var(--ink);color:var(--bg);border-radius:4px;padding:20px;display:grid;gap:10px}
+.hero .who{font-family:var(--f-display);font-weight:900;font-size:clamp(30px,5vw,46px);line-height:.95;text-transform:uppercase}
+.hero .what{font-size:16px;opacity:.85;max-width:65ch}
+.hero .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.hero button{border-color:var(--bg);background:transparent;color:var(--bg)}
+.hero button:hover{background:rgba(127,127,127,.25)}
+.phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.phases div{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:15px;padding:6px 8px;border-top:4px solid rgba(127,127,127,.4);opacity:.6}
+.phases div.done{opacity:.9;border-color:var(--bg)}
+.phases div.now{opacity:1;border-color:var(--accent);color:var(--accent)}
+.tablewrap{overflow-x:auto}
+table.poll{border-collapse:collapse;width:100%;min-width:520px}
+.poll th,.poll td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
+.poll th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.poll tr.final td{background:var(--yes-bg)}
+.slotd{font-weight:700}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:5px 10px;font-size:13px;background:var(--panel);color:var(--muted)}
+.seg button+button{border-left:1.5px solid var(--line)}
+.seg button.on.yes{background:var(--yes-bg);color:var(--yes)}
+.seg button.on.maybe{background:var(--maybe-bg);color:var(--maybe)}
+.seg button.on.no{background:var(--no-bg);color:var(--no)}
+.tally{display:flex;gap:6px;font-size:13px;font-weight:700}
+.tally .y{color:var(--yes)} .tally .m{color:var(--maybe)} .tally .n{color:var(--no)}
+.who-list{font-size:12px;color:var(--muted);max-width:260px}
+.dgrid{border-collapse:separate;border-spacing:3px;min-width:100%}
+.dgrid th,.dgrid td{text-align:center;padding:0;vertical-align:middle}
+.dgrid thead th{background:var(--soft);border-radius:4px;padding:8px 6px;min-width:64px;font-weight:600;font-size:12px}
+.dgrid thead th span{display:block;line-height:1.25}
+.dgrid thead th .dd{font-family:var(--f-display);font-weight:800;font-size:16px;text-transform:uppercase}
+.dgrid thead th .ln{color:var(--muted);font-size:11px}
+.dgrid thead th.fin{background:var(--yes-bg);color:var(--yes)}
+.dgrid thead th.best{outline:2px solid var(--ink)}
+.flag{margin-top:4px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--yes);color:var(--panel);border-radius:3px;padding:1px 4px}
+.flag.b{background:var(--ink)}
+.dgrid .pcol{text-align:left;font-size:13px;font-weight:700;padding:0 10px 0 0;white-space:nowrap;position:sticky;left:0;background:var(--panel);z-index:1;min-width:110px;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.dgrid thead .pcol{background:var(--panel);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cell{display:grid;place-items:center;width:100%;min-width:64px;height:40px;border-radius:4px;border:1.5px dashed var(--line);background:transparent;font-size:17px;font-weight:800;padding:0;color:var(--muted)}
+.cell.ro{border-style:solid;border-color:transparent;background:var(--bg)}
+.cell.yes{background:var(--yes-bg);color:var(--yes);border:1.5px solid var(--yes)}
+.cell.maybe{background:var(--maybe-bg);color:var(--maybe);border:1.5px solid var(--maybe)}
+.cell.no{background:var(--no-bg);color:var(--no);border:1.5px solid transparent}
+tr.mine .pcol{color:var(--accent)}
+tr.mine .cell:not(.yes):not(.maybe):not(.no):hover{border-color:var(--ink);color:var(--ink)}
+tr.tot td{padding:6px 0;font-size:14px}
+tr.ctl td{white-space:nowrap}
+tr.ctl .ghost{padding:2px 5px;font-size:12px}
+.ky{color:var(--yes)} .km{color:var(--maybe)} .kn{color:var(--no)}
+.propose{border-top:2px solid var(--ink);padding-top:14px;display:grid;gap:12px}
+.propose h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:18px;text-transform:uppercase;letter-spacing:.03em}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.pcolx{display:grid;gap:8px;align-content:start;min-width:0}
+.f-l{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pcolx .addrow input{flex:1 1 140px;width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--soft);border-radius:999px;padding:3px 4px 3px 10px;font-size:13px;font-weight:600}
+.chip button{border:none;background:transparent;padding:0 6px;font-size:12px;color:var(--muted);border-radius:999px}
+.qgroup{display:grid;gap:6px}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:4px}
+.qhead h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:18px;text-transform:uppercase;letter-spacing:.03em}
+.qlist{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.q{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 4px;border-bottom:1px solid var(--line)}
+.q:hover{background:var(--soft)}
+.qn{font-weight:600;color:var(--accent);padding-top:1px}
+.qt{overflow-wrap:anywhere;white-space:pre-wrap}
+.qbody{display:grid;gap:4px;min-width:0}
+.qbtns{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end}
+.qbtns .ghost{padding:2px 6px;font-size:13px}
+.qempty{padding:6px 4px}
+.qform{border-top:1px solid var(--line);padding-top:12px}
+.sheetbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;background:var(--soft);border-radius:4px;padding:12px}
+@media (max-width:520px){.q{grid-template-columns:24px minmax(0,1fr)}.qbtns{grid-column:2;justify-content:flex-start}}
+body.guestview .rail{display:none}
+body.guestview .grid{grid-template-columns:minmax(0,1fr);max-width:860px;margin:0 auto}
+.addrow{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.addrow label{flex:1 1 180px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.phase-h{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:15px;color:var(--muted);margin:10px 0 2px}
+.step{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 6px;border-radius:4px}
+.step:hover{background:var(--soft)}
+.chk{width:24px;height:24px;border:2px solid var(--ink);border-radius:3px;background:var(--panel);padding:0;display:grid;place-items:center;font-size:14px;line-height:1}
+.chk.on{background:var(--ink);color:var(--panel)}
+.step.done .lbl{color:var(--muted);text-decoration:line-through}
+.owner{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);white-space:nowrap}
+.stamp{font-size:12px;color:var(--muted)}
+.comments{display:grid;gap:10px}
+.cm{border-left:3px solid var(--line);padding:4px 0 4px 12px}
+.cm .h{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cm .h b{color:var(--ink)}
+.cm .t{white-space:pre-wrap;overflow-wrap:anywhere}
+.tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 6px;border-radius:3px;background:var(--soft);color:var(--blue)}
+.tag.Suggestion{background:var(--maybe-bg);color:var(--maybe)}
+.tag.Question{background:var(--soft);color:var(--blue)}
+.tag.Issue{background:var(--no-bg);color:var(--no)}
+.empty{border:2px dashed var(--line);border-radius:4px;padding:24px;color:var(--muted);text-align:center}
+.banner{background:var(--maybe-bg);color:var(--maybe);padding:10px 14px;border-radius:4px;font-weight:600;font-size:14px}
+.form{display:grid;gap:12px}
+.form .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.note{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:4px;font-weight:600;font-size:14px;z-index:20}
+@media (prefers-reduced-motion:no-preference){.ep,.step{transition:background .12s,border-color .12s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="onair">On air</span><span class="note">FHSS vodcast production</span></div>
+      <h1>Beyond the Books</h1>
+      <p class="sub" id="subAdmin">Book a date, run the checklist, leave notes. Times are China Standard Time (UTC+8).</p>
+      <p class="sub" id="subGuest" hidden>Recording date poll. Times are China Standard Time (UTC+8).</p>
+    </div>
+    <div class="actions"><label class="f" style="min-width:200px">Your name<input id="myName" placeholder="So others know who answered" autocomplete="name"></label></div>
+    <div class="actions" id="adminActions"><button class="primary" id="newBtn" type="button">+ New episode</button></div>
+  </header>
+  <div id="banner" class="banner" hidden></div>
+  <div class="grid">
+    <aside class="rail">
+      <h2>Episodes</h2>
+      <div id="rail"><div class="empty">Loading episodes…</div></div>
+    </aside>
+    <main class="main" id="main"><div class="empty">Loading…</div></main>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script>
+/* ===== SETTINGS: paste your two Supabase values here (see README) ===== */
+const SUPABASE_URL="https://imagwfyrgiuqascbjgxk.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable__ElQiwLCULNVJV2nGL1zBg_TO0GNu6k";
+/* ====================================================================== */
+const PHASES=["Booking","Prep","Record","Post"];
+const STEPS=[
+ {k:"guest",p:"Booking",t:"Guest confirmed and publication details in",o:"Richard"},
+ {k:"poll",p:"Booking",t:"Date poll shared with guest, Mary, Derek and vendor",o:"Richard"},
+ {k:"date",p:"Booking",t:"Recording date fixed and Dolby live room booked",o:"Richard"},
+ {k:"vendor",p:"Booking",t:"Vendor crew confirmed via Marketing",o:"Stephanie / Helen"},
+ {k:"questions",p:"Prep",t:"Main questions on the publication drafted",o:"Mary & Derek"},
+ {k:"zeitgeist",p:"Prep",t:"Shorts questions added",o:"Richard"},
+ {k:"brief",p:"Prep",t:"Question sheet sent to guest",o:"Mary"},
+ {k:"record",p:"Record",t:"Room, mics and cameras set up with vendor; episode recorded",o:"Richard + vendor"},
+ {k:"edit",p:"Post",t:"30-minute cut delivered",o:"Vendor"},
+ {k:"shorts",p:"Post",t:"Shorts for short-form platforms delivered",o:"Vendor"},
+ {k:"review",p:"Post",t:"Cut and shorts reviewed and approved",o:"Richard & Mary"},
+ {k:"publish",p:"Post",t:"Published and promoted",o:"Marketing"}
+];
+const QKINDS=[
+ {k:"main",label:"On the publication",owner:"Mary & Derek",empty:"No questions on the publication yet."},
+ {k:"zeitgeist",label:"Shorts questions",owner:"Richard",empty:"No shorts questions yet."}
+];
+function sheetText(ep,qs){
+  const fin=(ep.slots||[]).find(s=>s.id===ep.finalSlot);
+  let t="Beyond the Books: "+(ep.guest||"")+"\n"+(ep.publication?ep.publication+"\n":"")+(fin?"Recording: "+fmtSlot(fin.at).replace(/<[^>]+>/g," ")+", "+slotTime(fin.at)+" CST\n":"");
+  QKINDS.forEach(k=>{const l=qs.filter(q=>q.kind===k.k);if(!l.length)return;t+="\n"+(k.k==="main"?"On your publication":"Shorts questions")+"\n";l.forEach((q,i)=>t+=(i+1)+". "+q.text+"\n");});
+  return t.trim();
+}
+const S={db:null,user:null,me:null,eps:[],votes:[],comments:[],sel:null,profiles:{},canWrite:true,editing:false,creating:false,confirmDel:false,questions:[],qEdit:null,qKind:"main",sheetShow:null,draft:{dates:[],times:["10:00","14:00"],len:"30"}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function fmtSlot(s){ // "YYYY-MM-DDTHH:mm" in CST
+  const m=/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(s||""); if(!m) return esc(s);
+  const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+  return `${DOW[d.getUTCDay()]} ${+m[3]} ${MON[+m[2]-1]} ${m[1]}`;
+}
+function fmtShort(s){const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(s||"");if(!m)return esc(s);const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));return `${DOW[d.getUTCDay()]}<br>${+m[3]} ${MON[+m[2]-1]}`;}
+const slotTime=s=>(/T(\d\d:\d\d)/.exec(s||"")||[])[1]||"";
+function fmtAgo(ms){ if(!ms) return ""; const d=new Date(ms); const p=n=>String(n).padStart(2,"0");
+  const c=new Date(ms+8*3600e3); return `${c.getUTCDate()} ${MON[c.getUTCMonth()]}, ${p(c.getUTCHours())}:${p(c.getUTCMinutes())}`; }
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,2200);}
+function banner(t){const b=$("#banner");if(!t){b.hidden=true;return}b.textContent=t;b.hidden=false;}
+function nameOf(id){const p=S.profiles[id];return (p&&p.name)||(id===S.me?"You":"Someone");}
+function needName(){if(S.myName)return false;toast("Add your name at the top first");const i=$("#myName");if(i)i.focus();return true;}
+function uid(){return Math.random().toString(36).slice(2,10)}
+function stepsOf(ep){return ep.steps||{}}
+function progress(ep){const st=stepsOf(ep);const done=STEPS.filter(s=>st[s.k]&&st[s.k].done).length;return {done,total:STEPS.length};}
+function phaseOf(ep){const st=stepsOf(ep);const next=STEPS.find(s=>!(st[s.k]&&st[s.k].done));return next?next.p:"Live";}
+
+async function resolveProfiles(){}
+let renderQ=false;
+function schedule(){if(renderQ)return;renderQ=true;requestAnimationFrame(async()=>{renderQ=false;await resolveProfiles();render();});}
+
+const ART_URL=location.origin+location.pathname;
+function readHash(){const m=/^#(ep|poll)-([A-Za-z0-9-]+)$/.exec(location.hash||"");S.mode=m&&m[1]==="poll"?"poll":"admin";return m?m[2]:null;}
+function select(id){S.sel=id;S.editing=false;S.confirmDel=false;S.creating=false;try{history.replaceState(null,"",id?"#ep-"+id:location.pathname)}catch(e){}render();}
+window.addEventListener("hashchange",()=>{const h=readHash();if(h)S.sel=h;render();});
+
+function render(){const g=S.mode==="poll";document.body.classList.toggle("guestview",g);
+  $("#subAdmin").hidden=g;$("#subGuest").hidden=!g;$("#adminActions").hidden=g;
+  if(g){renderGuest();return;}renderRail();renderMain();}
+function cellsFor(ep,votes,mine,slots,admin){
+  let best=null;slots.forEach(s=>{const sc=votes.reduce((a,v)=>a+((v.answers||{})[s.id]==="yes"?2:(v.answers||{})[s.id]==="maybe"?1:0),0);if(!best||sc>best.sc)best={id:s.id,sc};});
+  const mark=a=>a==="yes"?"✓":a==="maybe"?"?":a==="no"?"✕":"";
+  return `<div class="tablewrap"><table class="dgrid"><thead>
+    <tr><th class="pcol">Slot (CST)</th>${slots.map(s=>`<th class="${ep.finalSlot===s.id?"fin":""}"><span class="dd">${fmtShort(s.at)}</span><span class="tt mono">${slotTime(s.at)}</span><span class="ln">${s.len?esc(s.len)+"m":""}</span>${ep.finalSlot===s.id?`<span class="flag">Fixed</span>`:admin&&best&&best.id===s.id&&best.sc>0?`<span class="flag b">Best</span>`:""}</th>`).join("")}</tr>
+  </thead><tbody>
+    <tr class="mine"><th class="pcol">You</th>${slots.map(s=>{const a=(mine&&mine.answers||{})[s.id];return `<td><button type="button" class="cell ${a||""}" data-cell="${s.id}" aria-label="Your answer for ${fmtSlot(s.at)} ${slotTime(s.at)}: ${a||"not answered"}">${mark(a)}</button></td>`}).join("")}</tr>
+    ${votes.filter(v=>v.uid!==S.me).map(v=>`<tr><th class="pcol">${esc(nameOf(v.uid))}</th>${slots.map(s=>{const a=(v.answers||{})[s.id];return `<td><span class="cell ro ${a||""}">${mark(a)}</span></td>`}).join("")}</tr>`).join("")}
+    ${admin?`<tr class="tot"><th class="pcol">Total</th>${slots.map(s=>{const y=votes.filter(v=>(v.answers||{})[s.id]==="yes").length,mb=votes.filter(v=>(v.answers||{})[s.id]==="maybe").length;return `<td class="mono"><b class="ky">${y}</b>${mb?`<span class="km"> +${mb}?</span>`:""}</td>`}).join("")}</tr>
+    <tr class="ctl"><th class="pcol"></th>${slots.map(s=>`<td>${ep.finalSlot===s.id?`<button type="button" class="ghost" data-unfix="1">Unfix</button>`:`<button type="button" class="ghost" data-fix="${s.id}">Fix</button>`}<button type="button" class="ghost" data-rmslot="${s.id}" aria-label="Remove slot">✕</button></td>`).join("")}</tr>`:""}
+  </tbody></table></div>`;
+}
+function bindCells(ep,mine){
+  document.querySelectorAll("[data-cell]").forEach(b=>b.onclick=async()=>{
+    if(!S.db){toast("Can't reach the shared data");return;}if(needName())return;
+    const answers=Object.assign({},mine&&mine.answers||{});const sid=b.dataset.cell;
+    const nx={undefined:"yes",yes:"maybe",maybe:"no",no:undefined}[answers[sid]];
+    if(nx) answers[sid]=nx; else delete answers[sid];
+    try{await S.db.doc("votes/"+ep.id+"__"+S.me).set({ep:ep.id,uid:S.me,answers,at:Date.now()});}catch(e){toast(writeErr(e))}
+  });
+}
+function renderGuest(){
+  const m=$("#main");const ep=S.eps.find(e=>e.id===S.sel);
+  if(!ep){m.innerHTML=`<div class="empty">${S.loaded?"This poll isn't available. Check the link you were sent.":"Loading the poll…"}</div>`;return;}
+  const votes=S.votes.filter(v=>v.ep===ep.id),mine=votes.find(v=>v.uid===S.me);
+  const slots=[...(ep.slots||[])].sort((a,b)=>a.at<b.at?-1:1);const fin=slots.find(s=>s.id===ep.finalSlot);
+  const answered=mine?Object.keys(mine.answers||{}).length:0;
+  m.innerHTML=`<section class="hero">
+    <div class="meta"><span class="pill Record">Beyond the Books</span><span class="mono">30-minute vodcast episode</span></div>
+    <div class="who">${esc(ep.guest)}</div>
+    ${ep.publication?`<div class="what">${esc(ep.publication)}</div>`:""}
+  </section>
+  <section class="sec">
+    <div class="sec-h"><h2>${fin?"Recording date":"When can you record?"}</h2>${slots.length?`<span class="note">${answered} of ${slots.length} answered</span>`:""}</div>
+    ${fin?`<div class="banner" style="background:var(--yes-bg);color:var(--yes)">Fixed: ${fmtSlot(fin.at)}, ${slotTime(fin.at)} CST, Dolby live room. Thank you!</div>`:""}
+    ${slots.length?`<p class="note" style="margin:0">Tap each slot in your row to mark <b class="ky">✓ works</b>, <b class="km">? maybe</b> or <b class="kn">✕ no</b>. Answers save automatically.</p>${cellsFor(ep,votes,mine,slots,false)}`:`<div class="empty">No times have been proposed yet. Please check back soon.</div>`}
+  </section>`;
+  bindCells(ep,mine);
+}
+function renderRail(){
+  const r=$("#rail");
+  if(!S.eps.length){r.innerHTML=`<div class="empty">No episodes yet.<br>Use <b>New episode</b> to add a guest and start a date poll.</div>`;return;}
+  r.innerHTML=S.eps.map(ep=>{const pr=progress(ep),ph=phaseOf(ep);
+    const fin=(ep.slots||[]).find(s=>s.id===ep.finalSlot);
+    return `<button type="button" class="ep ${ep.id===S.sel?"sel":""}" data-ep="${ep.id}">
+      <span class="who">${esc(ep.guest||"Untitled guest")}</span>
+      <span class="what">${esc(ep.publication||"Publication to confirm")}</span>
+      <span class="meta"><span class="pill ${ph}">${ph}</span><span class="mono">${pr.done}/${pr.total}</span>${fin?`<span class="mono">· ${fmtSlot(fin.at)} ${slotTime(fin.at)}</span>`:""}</span>
+      <span class="bar"><i style="width:${Math.round(pr.done/pr.total*100)}%"></i></span></button>`}).join("");
+  r.querySelectorAll("[data-ep]").forEach(b=>b.onclick=()=>select(b.dataset.ep));
+}
+
+function epForm(ep){
+  ep=ep||{};
+  return `<section class="sec"><div class="sec-h"><h2>${S.creating?"New episode":"Edit episode"}</h2></div>
+  <form class="form" id="epForm">
+    <div class="two">
+      <label class="f">Guest<input id="f-guest" required value="${esc(ep.guest)}" placeholder="Name and role"></label>
+      <label class="f">Publication featured<input id="f-pub" value="${esc(ep.publication)}" placeholder="Paper or book title"></label>
+    </div>
+    <label class="f">Notes for the team<textarea id="f-notes" placeholder="Venue, guest availability, links to the paper">${esc(ep.notes)}</textarea></label>
+    <div class="actions"><button class="primary" type="submit">${S.creating?"Create episode":"Save changes"}</button><button type="button" id="f-cancel">Cancel</button></div>
+  </form></section>`;
+}
+
+function renderMain(){
+  const m=$("#main");
+  if(S.creating){m.innerHTML=epForm();bindForm(null);return;}
+  const ep=S.eps.find(e=>e.id===S.sel);
+  if(!ep){m.innerHTML=`<div class="empty">${S.eps.length?"Pick an episode on the left.":"Add your first episode to start a date poll and the production checklist."}</div>`;return;}
+  if(S.editing){m.innerHTML=epForm(ep);bindForm(ep);return;}
+  const ph=phaseOf(ep),phIdx=ph==="Live"?4:PHASES.indexOf(ph);
+  const fin=(ep.slots||[]).find(s=>s.id===ep.finalSlot);
+  const votes=S.votes.filter(v=>v.ep===ep.id);
+  const mine=votes.find(v=>v.uid===S.me);
+  const slots=[...(ep.slots||[])].sort((a,b)=>a.at<b.at?-1:1);
+  const respondents=votes.length;
+  let best=null;
+  slots.forEach(s=>{const sc=votes.reduce((a,v)=>a+((v.answers||{})[s.id]==="yes"?2:(v.answers||{})[s.id]==="maybe"?1:0),0);if(!best||sc>best.sc)best={id:s.id,sc};});
+  const comments=S.comments.filter(c=>c.ep===ep.id).sort((a,b)=>(a.at||0)-(b.at||0));
+  const st=stepsOf(ep);
+  const qs=S.questions.filter(q=>q.ep===ep.id).sort((a,b)=>(a.order||0)-(b.order||0));
+
+  m.innerHTML=`
+  <section class="hero">
+    <div class="meta"><span class="pill ${ph}">${ph==="Live"?"Published":ph}</span>${fin?`<span class="mono">Recording ${fmtSlot(fin.at)}, ${slotTime(fin.at)} CST</span>`:`<span class="mono">Date not fixed</span>`}</div>
+    <div class="who">${esc(ep.guest)}</div>
+    <div class="what">${esc(ep.publication||"Publication to confirm")}</div>
+    ${ep.notes?`<div class="what" style="font-size:14px;white-space:pre-wrap">${esc(ep.notes)}</div>`:""}
+    <div class="phases">${PHASES.map((p,i)=>`<div class="${i<phIdx?"done":i===phIdx?"now":""}">${p}</div>`).join("")}</div>
+    <div class="row">
+      <button type="button" id="copyGuest">Copy guest poll link</button><button type="button" id="copyLink">Copy team link</button>
+      <button type="button" id="editEp">Edit details</button>
+      ${S.confirmDel?`<button type="button" id="delYes">Yes, delete episode</button><button type="button" id="delNo">Keep it</button>`:`<button type="button" id="delEp">Delete</button>`}
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Date poll: ${esc(ep.guest||"Untitled guest")}</h2><span class="note">${respondents} ${respondents===1?"person has":"people have"} answered</span></div>
+    <p class="note" style="margin:0">This poll is for the ${esc(ep.guest||"guest")} episode only (30 minutes). Share this page with ${esc(ep.guest||"the guest")}, Mary, Derek and the vendor. Tap your cells to cycle through <b class="ky">✓ works</b>, <b class="km">? maybe</b> and <b class="kn">✕ no</b>. Answers save as you tap.</p>
+    ${slots.length?cellsFor(ep,votes,mine,slots,true):`<div class="empty">No slots yet. Propose some dates and times below, then share the page.</div>`}
+    <div class="propose">
+      <h3>Propose dates and times</h3>
+      <div class="pgrid">
+        <div class="pcolx"><div class="f-l">1. Dates</div>
+          <div class="addrow"><input type="date" id="d-in" aria-label="Date to add"><button type="button" id="d-add">Add date</button></div>
+          <div class="chips">${S.draft.dates.length?S.draft.dates.map(d=>`<span class="chip">${fmtSlot(d+"T00:00")}<button type="button" data-rmd="${d}" aria-label="Remove date">✕</button></span>`).join(""):`<span class="note">No dates picked yet</span>`}</div></div>
+        <div class="pcolx"><div class="f-l">2. Start times (CST)</div>
+          <div class="addrow"><input type="time" id="t-in" value="16:00" aria-label="Time to add"><button type="button" id="t-add">Add time</button></div>
+          <div class="chips">${S.draft.times.length?S.draft.times.map(t=>`<span class="chip mono">${t}<button type="button" data-rmt="${t}" aria-label="Remove time">✕</button></span>`).join(""):`<span class="note">No times picked yet</span>`}</div></div>
+      </div>
+      <div class="addrow"><label class="f" style="flex:0 1 140px">3. Length<select id="s-len">${["30","45","60"].map(l=>`<option value="${l}" ${S.draft.len===l?"selected":""}>${l} min</option>`).join("")}</select></label>
+        <button type="button" class="primary" id="genSlots" ${S.draft.dates.length&&S.draft.times.length?"":"disabled"}>Add ${S.draft.dates.length*S.draft.times.length} slot${S.draft.dates.length*S.draft.times.length===1?"":"s"} to poll</button></div>
+    </div>
+  </section>
+
+  <section class="sec" id="questions">
+    <div class="sec-h"><h2>Questions</h2><span class="note">${qs.length} drafted · 30-minute episode</span></div>
+    ${QKINDS.map(k=>{const list=qs.filter(q=>q.kind===k.k);return `<div class="qgroup">
+      <div class="qhead"><h3>${k.label}</h3><span class="owner">${k.owner}</span></div>
+      ${list.length?`<ol class="qlist">${list.map((q,i)=>S.qEdit===q.id?`<li class="q editing"><span class="qn mono">${i+1}</span><div class="qbody"><textarea id="qe-text">${esc(q.text)}</textarea><div class="actions"><button type="button" class="primary" data-qsave="${q.id}">Save</button><button type="button" data-qcancel="1">Cancel</button></div></div></li>`:`<li class="q"><span class="qn mono">${i+1}</span><div class="qbody"><div class="qt">${esc(q.text)}</div><div class="stamp">${esc(nameOf(q.uid))} · ${fmtAgo(q.at)}</div></div>
+        <div class="qbtns"><button type="button" class="ghost" data-qmove="${q.id}" data-dir="-1" aria-label="Move up" ${i===0?"disabled":""}>↑</button><button type="button" class="ghost" data-qmove="${q.id}" data-dir="1" aria-label="Move down" ${i===list.length-1?"disabled":""}>↓</button><button type="button" class="ghost" data-qedit="${q.id}">Edit</button><button type="button" class="ghost" data-qdel="${q.id}" aria-label="Delete question">✕</button></div></li>`).join("")}</ol>`:`<div class="note qempty">${k.empty}</div>`}
+    </div>`}).join("")}
+    <form class="form qform" id="qForm">
+      <label class="f">Suggest a question<textarea id="q-text" required placeholder="e.g. What surprised you most when the findings came in?"></textarea></label>
+      <div class="actions"><select id="q-kind" style="width:auto" aria-label="Question type">${QKINDS.map(k=>`<option value="${k.k}" ${S.qKind===k.k?"selected":""}>${k.label}</option>`).join("")}</select><button class="primary" type="submit">Post question</button></div>
+    </form>
+    <div class="sheetbar">
+      <div><b>Question sheet for the guest</b><div class="note">${st.brief&&st.brief.done?`Sent ${fmtAgo(st.brief.at)}.`:"Copy it into an email or WeChat message, then mark it sent."}</div></div>
+      <div class="actions"><button type="button" id="qCopy" ${qs.length?"":"disabled"}>Copy question sheet</button>${st.brief&&st.brief.done?`<button type="button" class="ghost" data-step="brief">Undo sent</button>`:`<button type="button" class="primary" data-step="brief" ${qs.length?"":"disabled"}>Mark sent to guest</button>`}</div>
+    </div>
+    ${S.sheetShow===ep.id?`<label class="f">Select all and copy<textarea id="sheetTxt" rows="10" readonly>${esc(sheetText(ep,qs))}</textarea></label>`:""}
+  </section>
+  <section class="sec">
+    <div class="sec-h"><h2>Workflow</h2><span class="mono">${progress(ep).done}/${STEPS.length} done</span></div>
+    <ul class="steps">${PHASES.map(p=>`<li class="phase-h">${p}</li>`+STEPS.filter(s=>s.p===p).map(s=>{const d=st[s.k]&&st[s.k].done;
+      return `<li class="step ${d?"done":""}"><button type="button" class="chk ${d?"on":""}" data-step="${s.k}" aria-pressed="${!!d}" aria-label="Mark done: ${esc(s.t)}">${d?"✓":""}</button>
+      <div style="min-width:0"><div class="lbl">${esc(s.t)}</div>${d?`<div class="stamp">${esc(nameOf(st[s.k].by))} · ${fmtAgo(st[s.k].at)}</div>`:""}</div>
+      <span class="owner">${esc(s.o)}</span></li>`}).join("")).join("")}</ul>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Comments & suggestions</h2><span class="note">${comments.length} posted</span></div>
+    <div class="comments">${comments.length?comments.map(c=>`<div class="cm"><div class="h"><b>${esc(nameOf(c.uid))}</b><span class="tag ${esc(c.kind)}">${esc(c.kind||"Comment")}</span><span>${fmtAgo(c.at)}</span>${c.uid===S.me?`<button type="button" class="ghost" data-rmc="${c.id}">Delete</button>`:""}</div><div class="t">${esc(c.text)}</div></div>`).join(""):`<div class="note">No comments yet. Question ideas, edit notes and suggestions all go here.</div>`}</div>
+    <form class="form" id="cForm">
+      <label class="f">Add a comment<textarea id="c-text" required placeholder="e.g. Could we open with how the paper connects to AI and education?"></textarea></label>
+      <div class="actions"><select id="c-kind" style="width:auto"><option>Comment</option><option>Suggestion</option><option>Question</option><option>Issue</option></select><button class="primary" type="submit">Post</button></div>
+    </form>
+  </section>`;
+  bindMain(ep,mine);
+}
+
+function bindForm(ep){
+  $("#f-cancel").onclick=()=>{S.creating=false;S.editing=false;render();};
+  $("#epForm").onsubmit=async e=>{e.preventDefault();
+    const data={guest:$("#f-guest").value.trim(),publication:$("#f-pub").value.trim(),notes:$("#f-notes").value.trim()};
+    if(!data.guest) return;
+    if(!S.db){toast("Can't save: shared data is unavailable");return;}
+    try{
+      if(ep){await S.db.doc("episodes/"+ep.id).update(data);S.editing=false;toast("Saved");render();}
+      else{const id=uid();await S.db.doc("episodes/"+id).set(Object.assign(data,{slots:[],steps:{},finalSlot:null,createdAt:Date.now()}));S.creating=false;select(id);toast("Episode created");}
+    }catch(err){toast(writeErr(err));}
+  };
+}
+function writeErr(e){return "Couldn't save. Check your connection and try again";}
+
+function bindMain(ep,mine){
+  const db=S.db;
+  const guard=()=>{if(!db){toast("Can't save: shared data is unavailable");return false}return !needName()};
+  $("#editEp").onclick=()=>{S.editing=true;render();};
+  const del=$("#delEp");if(del) del.onclick=()=>{S.confirmDel=true;render();};
+  const dn=$("#delNo");if(dn) dn.onclick=()=>{S.confirmDel=false;render();};
+  const dy=$("#delYes");if(dy) dy.onclick=async()=>{if(!guard())return;try{await db.doc("episodes/"+ep.id).delete();S.sel=null;S.confirmDel=false;toast("Episode deleted");}catch(e){toast(writeErr(e))}};
+  const cp=async(t,msg)=>{try{await navigator.clipboard.writeText(t);toast(msg)}catch(e){toast(t)}};
+  $("#copyLink").onclick=()=>cp(ART_URL+"#ep-"+ep.id,"Team link copied");
+  $("#copyGuest").onclick=()=>cp(ART_URL+"#poll-"+ep.id,"Guest poll link copied");
+  const D=S.draft;
+  $("#d-add").onclick=()=>{const v=$("#d-in").value;if(!v)return;if(!D.dates.includes(v))D.dates.push(v);D.dates.sort();render();};
+  $("#t-add").onclick=()=>{const v=$("#t-in").value;if(!v)return;if(!D.times.includes(v))D.times.push(v);D.times.sort();render();};
+  document.querySelectorAll("[data-rmd]").forEach(b=>b.onclick=()=>{D.dates=D.dates.filter(x=>x!==b.dataset.rmd);render();});
+  document.querySelectorAll("[data-rmt]").forEach(b=>b.onclick=()=>{D.times=D.times.filter(x=>x!==b.dataset.rmt);render();});
+  $("#s-len").onchange=e=>{D.len=e.target.value;};
+  $("#genSlots").onclick=async()=>{if(!guard())return;
+    const have=new Set((ep.slots||[]).map(s=>s.at));const add=[];
+    D.dates.forEach(d=>D.times.forEach(t=>{const at=d+"T"+t;if(!have.has(at))add.push({id:uid(),at,len:D.len});}));
+    if(!add.length){toast("Those slots are already in the poll");return;}
+    try{await db.doc("episodes/"+ep.id).update({slots:[...(ep.slots||[]),...add]});D.dates=[];toast(add.length+" slot"+(add.length===1?"":"s")+" added");render();}catch(err){toast(writeErr(err))}};
+  bindCells(ep,mine);
+  document.querySelectorAll("[data-rmslot]").forEach(b=>b.onclick=async()=>{if(!guard())return;const id=b.dataset.rmslot;
+    try{await db.doc("episodes/"+ep.id).update({slots:(ep.slots||[]).filter(s=>s.id!==id),finalSlot:ep.finalSlot===id?null:ep.finalSlot});}catch(e){toast(writeErr(e))}});
+  document.querySelectorAll("[data-fix]").forEach(b=>b.onclick=async()=>{if(!guard())return;
+    const steps=Object.assign({},ep.steps||{});steps.date={done:true,by:S.me,at:Date.now()};
+    try{await db.doc("episodes/"+ep.id).update({finalSlot:b.dataset.fix,steps});toast("Date fixed");}catch(e){toast(writeErr(e))}});
+  document.querySelectorAll("[data-unfix]").forEach(b=>b.onclick=async()=>{if(!guard())return;
+    const steps=Object.assign({},ep.steps||{});delete steps.date;
+    try{await db.doc("episodes/"+ep.id).update({finalSlot:null,steps});}catch(e){toast(writeErr(e))}});
+  document.querySelectorAll("[data-step]").forEach(b=>b.onclick=async()=>{if(!guard())return;
+    const k=b.dataset.step;const steps=Object.assign({},ep.steps||{});
+    if(steps[k]&&steps[k].done) delete steps[k]; else {steps[k]={done:true,by:S.me,at:Date.now()};
+      if(k==="brief"){const qk=S.questions.filter(q=>q.ep===ep.id);if(qk.some(q=>q.kind==="main")&&!steps.questions)steps.questions={done:true,by:S.me,at:Date.now()};if(qk.some(q=>q.kind==="zeitgeist")&&!steps.zeitgeist)steps.zeitgeist={done:true,by:S.me,at:Date.now()};}}
+    try{await db.doc("episodes/"+ep.id).update({steps});}catch(e){toast(writeErr(e))}});
+  const tick=async(keys)=>{const steps=Object.assign({},ep.steps||{});let ch=false;keys.forEach(k=>{if(!(steps[k]&&steps[k].done)){steps[k]={done:true,by:S.me,at:Date.now()};ch=true;}});if(ch)await db.doc("episodes/"+ep.id).update({steps});};
+  $("#qForm").onsubmit=async e=>{e.preventDefault();if(!guard())return;const text=$("#q-text").value.trim();if(!text)return;const kind=$("#q-kind").value;S.qKind=kind;
+    try{await db.collection("questions").add({ep:ep.id,uid:S.me,text,kind,order:Date.now(),at:Date.now()});$("#q-text").value="";toast("Question posted");}catch(err){toast(writeErr(err))}};
+  $("#q-kind").onchange=e=>{S.qKind=e.target.value;};
+  document.querySelectorAll("[data-qedit]").forEach(b=>b.onclick=()=>{S.qEdit=b.dataset.qedit;render();const t=$("#qe-text");if(t)t.focus();});
+  document.querySelectorAll("[data-qcancel]").forEach(b=>b.onclick=()=>{S.qEdit=null;render();});
+  document.querySelectorAll("[data-qsave]").forEach(b=>b.onclick=async()=>{if(!guard())return;const text=$("#qe-text").value.trim();if(!text)return;
+    try{await db.doc("questions/"+b.dataset.qsave).update({text});S.qEdit=null;toast("Saved");render();}catch(e){toast(writeErr(e))}});
+  document.querySelectorAll("[data-qdel]").forEach(b=>b.onclick=async()=>{if(!guard())return;try{await db.doc("questions/"+b.dataset.qdel).delete();toast("Question removed");}catch(e){toast(writeErr(e))}});
+  document.querySelectorAll("[data-qmove]").forEach(b=>b.onclick=async()=>{if(!guard())return;
+    const q=S.questions.find(x=>x.id===b.dataset.qmove);if(!q)return;
+    const list=S.questions.filter(x=>x.ep===ep.id&&x.kind===q.kind).sort((a,c)=>(a.order||0)-(c.order||0));
+    const i=list.indexOf(q),j=i+(+b.dataset.dir);if(j<0||j>=list.length)return;const o=list[j];
+    let a1=q.order||0,a2=o.order||0;if(a1===a2)a2=a1+(+b.dataset.dir);
+    try{await db.doc("questions/"+q.id).update({order:a2});await db.doc("questions/"+o.id).update({order:a1});}catch(e){toast(writeErr(e))}});
+  $("#qCopy").onclick=async()=>{const qs=S.questions.filter(q=>q.ep===ep.id).sort((a,b)=>(a.order||0)-(b.order||0));const t=sheetText(ep,qs);
+    try{await navigator.clipboard.writeText(t);toast("Question sheet copied");}catch(e){S.sheetShow=ep.id;render();const ta=$("#sheetTxt");if(ta){ta.focus();ta.select();}}};
+  $("#cForm").onsubmit=async e=>{e.preventDefault();if(!guard())return;const text=$("#c-text").value.trim();if(!text)return;
+    try{await db.collection("comments").add({ep:ep.id,uid:S.me,text,kind:$("#c-kind").value,at:Date.now()});$("#c-text").value="";toast("Posted");}catch(err){toast(writeErr(err))}};
+  document.querySelectorAll("[data-rmc]").forEach(b=>b.onclick=async()=>{if(!guard())return;try{await db.doc("comments/"+b.dataset.rmc).delete();}catch(e){toast(writeErr(e))}});
+}
+
+$("#newBtn").onclick=()=>{S.creating=true;S.editing=false;render();};
+
+/* ---- Supabase adapter: a tiny document store on one table ("items") ---- */
+function makeDb(sb){
+  const chk=r=>{if(r.error)throw r.error;return r;};
+  const listeners={};
+  async function load(col){const r=chk(await sb.from("items").select("id,data").eq("collection",col));
+    const snap={docs:r.data.map(x=>({id:x.id,data:()=>x.data}))};(listeners[col]||[]).forEach(l=>l.next(snap));}
+  function doc(col,id){return{
+    async set(data){chk(await sb.from("items").upsert({collection:col,id,data,updated_at:new Date().toISOString()}));load(col);},
+    async update(patch){const r=chk(await sb.from("items").select("data").eq("collection",col).eq("id",id).maybeSingle());
+      const cur=(r.data&&r.data.data)||{};await this.set(Object.assign({},cur,patch));},
+    async delete(){chk(await sb.from("items").delete().eq("collection",col).eq("id",id));load(col);}
+  };}
+  sb.channel("items-changes").on("postgres_changes",{event:"*",schema:"public",table:"items"},p=>{
+    const col=(p.new&&p.new.collection)||(p.old&&p.old.collection);if(col&&listeners[col])load(col);else Object.keys(listeners).forEach(load);
+  }).subscribe();
+  setInterval(()=>Object.keys(listeners).forEach(c=>load(c).catch(()=>{})),20000); // fallback refresh
+  return{
+    doc(path){const [c,i]=path.split("/");return doc(c,i);},
+    collection(col){return{
+      async add(data){const id=uid()+uid();await doc(col,id).set(data);return{id};},
+      onSnapshot(next,err){(listeners[col]=listeners[col]||[]).push({next,err});load(col).catch(e=>err&&err(e));}
+    };}
+  };
+}
+(function boot(){
+  S.sel=readHash();
+  try{S.me=localStorage.getItem("btb_me");if(!S.me){S.me="p_"+uid()+uid();localStorage.setItem("btb_me",S.me);}S.myName=localStorage.getItem("btb_name")||"";}catch(e){S.me="p_"+uid()+uid();S.myName="";}
+  const ni=$("#myName");ni.value=S.myName;
+  if(SUPABASE_URL.startsWith("PASTE")||!window.supabase){banner("Setup not finished: add your Supabase project URL and key to index.html (see README).");S.loaded=true;render();return;}
+  const db=makeDb(window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY));S.db=db;
+  ni.onchange=async()=>{S.myName=ni.value.trim();try{localStorage.setItem("btb_name",S.myName)}catch(e){}
+    if(S.myName){try{await db.doc("people/"+S.me).set({name:S.myName});toast("Thanks, "+S.myName)}catch(e){toast(writeErr(e))}}};
+  const timer=setTimeout(()=>{if(!S.loaded)banner("The shared data is slow to load. Check your connection and refresh.");},10000);
+  const onErr=()=>banner("Can't reach the shared data right now. It will retry automatically.");
+  db.collection("people").onSnapshot(s=>{S.profiles={};s.docs.forEach(d=>S.profiles[d.id]=d.data());schedule();},onErr);
+  db.collection("episodes").onSnapshot(s=>{clearTimeout(timer);S.loaded=true;banner(null);
+    S.eps=s.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    if(!S.sel&&S.eps.length) S.sel=S.eps[0].id; schedule();},onErr);
+  db.collection("votes").onSnapshot(s=>{S.votes=s.docs.map(d=>Object.assign({id:d.id},d.data()));schedule();},onErr);
+  db.collection("questions").onSnapshot(s=>{S.questions=s.docs.map(d=>Object.assign({id:d.id},d.data()));schedule();},onErr);
+  db.collection("comments").onSnapshot(s=>{S.comments=s.docs.map(d=>Object.assign({id:d.id},d.data()));schedule();},onErr);
+  render();
+})();
+</script>
+</body>
+</html>
